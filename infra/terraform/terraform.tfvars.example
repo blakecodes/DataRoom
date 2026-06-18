@@ -1,0 +1,10 @@
+subscription_id       = "00000000-0000-0000-0000-000000000000"
+tenant_id             = "00000000-0000-0000-0000-000000000000"
+location              = "eastus"
+postgres_location     = "westus3"
+project               = "dataroom"
+postgres_admin        = "dataroom"
+
+google_client_id      = "your-google-oauth-client-id.apps.googleusercontent.com"
+google_client_secret  = "your-google-oauth-client-secret"
+google_api_key        = "your-google-browser-api-key"
