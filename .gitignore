@@ -1,0 +1,38 @@
+.env
+frontend/.env
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+*.local
+
+# Editor
+.idea/
+.vscode/
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+infra/terraform/tfplan
+crash.log
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+
+# Private project materials / interview artifacts
+design-context/
+docs/
+interview-goal.md
+*interview-notes*
+*notes*.md

@@ -1,0 +1,65 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: dataroom
+      POSTGRES_PASSWORD: dataroom
+      POSTGRES_DB: dataroom
+    # Host port 5433 to avoid clashing with a local Postgres on 5432.
+    ports: ["5433:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dataroom"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    command: "azurite-blob --blobHost 0.0.0.0 --blobPort 10000"
+    ports: ["10000:10000"]
+    volumes: ["azurite:/data"]
+
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    command: ["./entrypoint.sh"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://dataroom:dataroom@db:5432/dataroom
+      REDIS_URL: redis://redis:6379/0
+      AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
+      BLOB_CONTAINER: dataroom-files
+      BLOB_PUBLIC_ENDPOINT: http://localhost:10000/devstoreaccount1
+    ports: ["8000:8000"]
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      azurite: { condition: service_started }
+
+  worker:
+    build: ./backend
+    command: ["python", "worker.py"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://dataroom:dataroom@db:5432/dataroom
+      REDIS_URL: redis://redis:6379/0
+      AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
+      BLOB_CONTAINER: dataroom-files
+      BLOB_PUBLIC_ENDPOINT: http://localhost:10000/devstoreaccount1
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      azurite: { condition: service_started }
+
+volumes:
+  pgdata:
+  azurite:
