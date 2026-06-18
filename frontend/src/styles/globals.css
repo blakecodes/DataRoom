@@ -1,0 +1,152 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+@import "./theme.css";
+@import "./typography.css";
+
+@plugin "@tailwindcss/typography";
+@plugin "tailwindcss-react-aria-components";
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:where(.dark-mode, .dark-mode *));
+@custom-variant label (& [data-label]);
+@custom-variant focus-input-within (&:has(input:focus));
+
+@utility scrollbar-hide {
+    /* For Webkit-based browsers (Chrome, Safari and Opera) */
+    &::-webkit-scrollbar {
+        display: none;
+        -webkit-appearance: none;
+    }
+
+    /* For IE, Edge and Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+@utility transition-inherit-all {
+    transition-property: inherit;
+    transition-duration: inherit;
+    transition-timing-function: inherit;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    min-height: 100%;
+}
+
+html,
+body {
+    font-family: var(--font-body);
+    color: var(--color-text-primary);
+    background: var(--color-bg-secondary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-variant-ligatures: contextual;
+    font-variant-ligatures: contextual;
+    -webkit-font-kerning: normal;
+    font-kerning: normal;
+}
+
+body {
+    margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+}
+
+a[href] {
+    cursor: pointer;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea,
+select {
+    cursor: text;
+}
+
+.app-shell-shadow {
+    box-shadow: 0 14px 40px -16px rgba(16, 24, 40, 0.22);
+}
+
+.dark-mode .app-shell-shadow {
+    box-shadow: 0 14px 40px -16px rgba(0, 0, 0, 0.45);
+}
+
+.card-shadow {
+    box-shadow: 0 8px 24px -14px rgba(16, 24, 40, 0.2);
+}
+
+.dark-mode .card-shadow {
+    box-shadow: 0 8px 24px -14px rgba(0, 0, 0, 0.35);
+}
+
+.modal-shadow {
+    box-shadow: 0 24px 48px -12px rgba(16, 24, 40, 0.4);
+}
+
+.dark-mode .modal-shadow {
+    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.55);
+}
+
+.hide-scrollbar {
+    scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.doc-viewer {
+    height: 100%;
+    background: var(--color-bg-tertiary);
+}
+
+.doc-viewer #msdoc-renderer,
+.doc-viewer .react-pdf__Document,
+.doc-viewer .rdv-markdown,
+.doc-viewer .rdv-csv {
+    margin: 0 auto;
+}
+
+/* Hide the default expand arrow on Safari.  */
+details summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Hide default arrows from number inputs. */
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+/* Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* Hide the default clear button (X) from search inputs. */
+input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+}
+
+/* Hide the default outline on chart elements. */
+.recharts-surface,
+.recharts-surface g,
+.recharts-surface path {
+    outline: none;
+}
