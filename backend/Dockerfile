@@ -7,8 +7,10 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 # System deps for psycopg2 and cryptography wheels are prebuilt; keep image slim.
+# ca-certificates is required for Redis TLS (rediss://) cert validation, since
+# redis-py validates against the system trust store (unlike requests/certifi).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

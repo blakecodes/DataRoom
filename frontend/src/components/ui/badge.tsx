@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from "react";
 import { cx } from "@/utils/cx";
 
-type BadgeVariant = "drive" | "upload" | "success" | "connected" | "error" | "warning" | "processing";
+type BadgeVariant = "drive" | "upload" | "success" | "connected" | "error" | "warning" | "processing" | "neutral";
 
 const variants: Record<BadgeVariant, string> = {
     drive: "border-utility-brand-200 bg-utility-brand-50 text-utility-brand-700",
@@ -11,6 +11,7 @@ const variants: Record<BadgeVariant, string> = {
     error: "border-utility-red-200 bg-utility-red-50 text-utility-red-700",
     warning: "border-utility-yellow-200 bg-utility-yellow-50 text-utility-yellow-700",
     processing: "border-utility-brand-200 bg-utility-brand-50 text-utility-brand-700",
+    neutral: "border-secondary bg-secondary text-tertiary",
 };
 
 export function Badge({
@@ -29,6 +30,7 @@ export function Badge({
             {variant === "drive" && <span className="size-1.5 rounded-full bg-brand-solid" />}
             {variant === "upload" && <span className="size-1.5 rounded-full bg-fg-quaternary" />}
             {variant === "connected" && <span className="size-1.5 rounded-full bg-utility-green-500" />}
+            {variant === "neutral" && <span className="size-1.5 rounded-full bg-fg-quaternary" />}
             {variant === "processing" && (
                 <span className="size-2 animate-spin rounded-full border-2 border-utility-brand-200 border-t-brand-solid" />
             )}

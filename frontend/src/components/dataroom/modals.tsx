@@ -23,14 +23,16 @@ export function ImportProgressCard({ job, onClose }: { job: ImportJob | null; on
         return null;
     }
 
-    const done = job.completedCount + job.failedCount;
+    const finishedItems = job.items.filter((item) => item.status !== "pending" && item.status !== "running").length;
+    const done = Math.max(job.completedCount + job.failedCount, finishedItems);
     const active = job.status === "pending" || job.status === "running";
     const pct = job.totalCount ? Math.round((done / job.totalCount) * 100) : 0;
+    const title = active ? "Importing files..." : job.failedCount ? "Import finished with errors" : "Import complete";
 
     return (
         <div className="fixed bottom-6 right-6 z-40 w-full max-w-[480px] overflow-hidden rounded-[14px] border border-secondary bg-primary app-shell-shadow">
             <div className="border-b border-secondary px-6 py-5">
-                <div className="text-base font-semibold text-primary">{active ? "Importing files..." : "Import complete"}</div>
+                <div className="text-base font-semibold text-primary">{title}</div>
                 <div className="mt-3 flex items-center gap-3">
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
                         <div className="h-full rounded-full bg-brand-solid transition-all" style={{ width: `${pct}%` }} />
@@ -56,7 +58,7 @@ export function ImportProgressCard({ job, onClose }: { job: ImportJob | null; on
                                 ) : null}
                             </div>
                             {item.status === "done" ? <Badge variant="success">Done</Badge> : null}
-                            {item.status === "skipped" ? <Badge variant="processing">Skipped</Badge> : null}
+                            {item.status === "skipped" ? <Badge variant="neutral">Skipped</Badge> : null}
                             {(item.status === "running" || item.status === "pending") ? <Badge variant="processing">Importing</Badge> : null}
                             {item.status === "failed" ? <Badge variant="error">Failed</Badge> : null}
                         </div>

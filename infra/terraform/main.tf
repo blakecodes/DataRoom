@@ -3,7 +3,6 @@ locals {
   api_app_name   = "${var.project}-api"
   web_app_name   = "${var.project}-web"
   worker_app     = "${var.project}-worker"
-  redis_app      = "${var.project}-redis"
   blob_container = "dataroom-files"
 }
 
@@ -128,7 +127,10 @@ locals {
   web_base_url   = "https://${local.web_fqdn}"
 
   database_url = "postgresql://${var.postgres_admin}:${random_password.postgres.result}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/${azurerm_postgresql_flexible_server_database.main.name}?sslmode=require"
-  redis_url    = "redis://${local.redis_app}:6379/0"
+  # Managed Azure Cache for Redis: TLS-only (rediss://) on 6380 with the access
+  # key. The managed service keeps a stable connection, unlike the internal
+  # Container App Redis whose ingress dropped the worker's long-lived socket.
+  redis_url = "rediss://:${urlencode(azurerm_redis_cache.main.primary_access_key)}@${azurerm_redis_cache.main.hostname}:${azurerm_redis_cache.main.ssl_port}/0"
 
   storage_connection_string = azurerm_storage_account.main.primary_connection_string
   blob_public_endpoint      = azurerm_storage_account.main.primary_blob_endpoint
@@ -153,34 +155,22 @@ resource "null_resource" "build_frontend" {
   }
 }
 
-# --- Redis (internal TCP service for the import queue) ---
-resource "azurerm_container_app" "redis" {
-  name                         = local.redis_app
-  resource_group_name          = azurerm_resource_group.main.name
-  container_app_environment_id = azurerm_container_app_environment.main.id
-  revision_mode                = "Single"
+# --- Redis (managed broker for the import queue) ---
+# Azure Cache for Redis Basic C0 (~$16/mo). Replaced the internal Redis Container
+# App, whose ingress closed the worker's idle socket mid-import ("Connection
+# closed by server"), stalling the queue after one job. The managed service
+# provides a stable, keepalive-friendly connection.
+resource "azurerm_redis_cache" "main" {
+  name                = "${var.project}-redis-${random_string.suffix.result}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  capacity            = 0
+  family              = "C"
+  sku_name            = "Basic"
+  minimum_tls_version = "1.2"
 
-  template {
-    min_replicas = 1
-    max_replicas = 1
-    container {
-      name   = "redis"
-      image  = "redis:7"
-      cpu    = 0.25
-      memory = "0.5Gi"
-    }
-  }
-
-  ingress {
-    external_enabled = false
-    transport        = "tcp"
-    target_port      = 6379
-    exposed_port     = 6379
-    traffic_weight {
-      latest_revision = true
-      percentage      = 100
-    }
-  }
+  # TLS-only; the queue connects via rediss:// on the SSL port.
+  non_ssl_port_enabled = false
 }
 
 # --- API ---
@@ -225,6 +215,10 @@ resource "azurerm_container_app" "api" {
     name  = "google-client-secret"
     value = var.google_client_secret
   }
+  secret {
+    name  = "redis-url"
+    value = local.redis_url
+  }
 
   template {
     # Force a fresh revision (and image re-pull) whenever the backend image rebuilds.
@@ -264,8 +258,8 @@ resource "azurerm_container_app" "api" {
         secret_name = "google-client-secret"
       }
       env {
-        name  = "REDIS_URL"
-        value = local.redis_url
+        name        = "REDIS_URL"
+        secret_name = "redis-url"
       }
       env {
         name  = "BLOB_CONTAINER"
@@ -347,6 +341,10 @@ resource "azurerm_container_app" "worker" {
     name  = "google-client-secret"
     value = var.google_client_secret
   }
+  secret {
+    name  = "redis-url"
+    value = local.redis_url
+  }
 
   template {
     revision_suffix = "b${substr(sha1(null_resource.build_backend.id), 0, 10)}"
@@ -379,8 +377,8 @@ resource "azurerm_container_app" "worker" {
         secret_name = "google-client-secret"
       }
       env {
-        name  = "REDIS_URL"
-        value = local.redis_url
+        name        = "REDIS_URL"
+        secret_name = "redis-url"
       }
       env {
         name  = "BLOB_CONTAINER"
